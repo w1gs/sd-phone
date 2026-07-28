@@ -20,6 +20,11 @@ export interface OpenPayload {
     installedApps?: string[];
     homeLayout?: string;
     mailDomain?: string;
+    /** Phone-number display config (config.Phone.Number); formats are keyed by digit count. */
+    number?: {
+        formats?: Record<string, string>;
+        length?: number;
+    };
     wallpaper: {
         lock: string;
         home: string;
@@ -211,6 +216,8 @@ export type NuiMessage =
     | { action: 'sd-phone:stocks:prices'; data: { assets: { symbol: string; price: number; changePct: number }[] } }
     | { action: 'sd-phone:mail:received';         data: unknown }
     | { action: 'sd-phone:camera:key';            data: { key: string } }
+    | { action: 'sd-phone:camera:lock';           data: { on: boolean } }
+    | { action: 'sd-phone:camera:faceCam';        data: { on: boolean } }
     | { action: 'sd-phone:photos:added';          data: { id: string; url: string; createdAt: string } }
     | { action: 'sd-phone:groups:inviteReceived'; data: GroupInvitePush }
     | { action: 'sd-phone:groups:memberJoined';   data: GroupRosterPush }
@@ -252,6 +259,8 @@ export type NuiMessage =
     | { action: 'sd-phone:payphone:open';     data: { number: string; anonymous: boolean; myNumber?: string | null; favorites: { name: string; phone: string }[]; connected?: boolean; callerName?: string; coin?: { enabled: boolean; cost: number }; credited?: boolean } }
     | { action: 'sd-phone:payphone:outgoing'; data: { channel: number; number: string } }
     | { action: 'sd-phone:payphone:ended';    data: { channel: number; reason: string } }
+    | { action: 'sd-phone:payphone:incoming';      data: { channel: number } }
+    | { action: 'sd-phone:payphone:incomingEnded'; data: { channel: number } }
     | { action: 'sd-phone:radio:status';   data: { on: boolean; freq: number; standby?: boolean } }
     | { action: 'sd-phone:radio:onair';    data: { active: boolean } }
     | { action: 'sd-phone:radio:count';    data: { count: number } }

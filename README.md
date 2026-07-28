@@ -2,7 +2,7 @@
 
 # sd-phone (THIS IS A BETA RELEASE, WILL HAVE ISSUES)
 
-**An iOS-themed smartphone for FiveM.** 45+ server-backed apps, real app accounts, a live game-view camera and online multiplayer games. Ships its own custom phone props: eight phone items in eight colours, each tinting both the on-screen frame and the custom prop model held in hand. A unique phone system as well as sim cards can be enabled!
+**An iOS-themed smartphone for FiveM.** that supports QBOX, QBCORE and ESX. 45+ server-backed apps, real app accounts, a live game-view camera and online multiplayer games. Ships its own custom phone props: eight phone items in eight colours, each tinting both the on-screen frame and the custom prop model held in hand. A unique phone system as well as sim cards can be enabled!
 
 **A drop-in lb-phone replacement.** Scripts and custom apps written against lb-phone's exports and events keep running unmodified, and a first-boot migration carries your players across rather than resetting them: phone numbers and lock passcodes, contacts, blocked numbers, call history, SMS threads including groups and reactions, photos and albums, notes, phone settings, mail accounts with their inboxes, wallet transaction history, voice memos, Photogram and Birdy accounts with their posts, stories, DMs and followers, and the app logins themselves, so players open the phone already signed in.
 
@@ -152,6 +152,16 @@ phone_pink    phone_purple   phone_red     phone_yellow
 Ready-made ox_inventory definitions live in the [installation docs](https://docs.samueldev.shop/resources/phone/installation), and the item icons ship in this repo's `images/` folder.
 
 Players can also open the phone with a keybind (<kbd>F1</kbd> by default), which still requires owning one of these items.
+
+Running unique phones with physical SIM trays (`SimTray` in `configs/uniqueandsim.lua`, ox_inventory only)? Give every phone item a `buttons` entry so players can open its tray:
+
+```lua
+buttons = {
+    { label = 'SIM Tray', action = function(slot) exports['sd-phone']:openSimTray(slot) end },
+},
+```
+
+Using the phone item opens the phone itself, so the tray needs its own button. Skip this in metadata mode, where SIMs are installed by using the `sim_card` item.
 
 ### 3. Add your API keys
 

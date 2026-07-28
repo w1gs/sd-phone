@@ -3,6 +3,8 @@ local store = {}
 
 
 local util = require 'server.util'
+---@type table sd-phone config root (configs/config.lua); read for the per-player contacts cap.
+local config = require 'configs.config'
 local function newId() return util.newId(7) end
 
 store.newId = newId
@@ -27,6 +29,11 @@ function store.ensureSchema()
             INDEX idx_phone_contacts_cid (citizenid)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
     ]])
+
+    -- listContacts orders by name. On the citizenid-only index that is a filesort of the whole
+    -- address book before the LIMIT can drop anything; with (citizenid, name) it walks the index
+    -- already ordered and stops at the cap.
+    util.ensureIndex('phone_contacts', 'idx_phone_contacts_cid_name', '(citizenid, name)')
 
     local col = MySQL.single.await([[
         SELECT COUNT(*) AS n FROM information_schema.columns
@@ -170,16 +177,29 @@ function store.unblockNumber(citizenid, number)
     MySQL.update.await('DELETE FROM phone_blocked WHERE citizenid = ? AND number = ?', { citizenid, d })
 end
 
----List every contact owned by a player, alphabetised server-side. Read-only.
+---@type integer Hard ceiling on one read of a player's address book. A migrated book can run to
+---four figures, which trips oxmysql's oversized-result warning and ships the lot over the bridge.
+---
+---Tracks the configured per-player cap rather than standing as a second number: a player can
+---never legitimately hold more than that, and actions.lua walks this list to detect duplicates,
+---so a ceiling BELOW the cap would silently stop catching them past the ceiling.
+local CONTACTS_CAP <const> = math.max(1,
+    math.floor(tonumber(config.Contacts and config.Contacts.MaxContactsPerPlayer) or 500))
+
+---List a player's contacts, alphabetised server-side, capped. Read-only.
 ---@param citizenid string
+---@param limit? integer defaults to CONTACTS_CAP, clamped to it
 ---@return table[]
-function store.listContacts(citizenid)
-    return MySQL.query.await([[
+function store.listContacts(citizenid, limit)
+    local n = math.floor(tonumber(limit) or CONTACTS_CAP)
+    if n < 1 then n = 1 elseif n > CONTACTS_CAP then n = CONTACTS_CAP end
+    return MySQL.query.await(([[
         SELECT id, name, phone, email, address, color, avatar, favorite
         FROM phone_contacts
         WHERE citizenid = ?
         ORDER BY name ASC
-    ]], { citizenid }) or {}
+        LIMIT %d
+    ]]):format(n), { citizenid }) or {}
 end
 
 ---Reads one contact, scoped to its owner; nil if missing or not theirs. Read-only.
